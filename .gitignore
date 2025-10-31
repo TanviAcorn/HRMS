@@ -1,0 +1,1 @@
+/vendor\n/node_modules\n/.env\n/public/storage\n/storage/*.key\n.idea\n.vscode\n.env.backup
