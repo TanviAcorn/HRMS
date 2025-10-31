@@ -197,6 +197,7 @@ if (session()->has('is_supervisor') && session()->has('is_supervisor') != false)
                             </li> -->
                         </ul>
                     </li>
+
                    
                     
                     @endif
@@ -368,6 +369,7 @@ if (session()->has('is_supervisor') && session()->has('is_supervisor') != false)
                             </li> -->
                         </ul>
                     </li>
+                    
                     @endif
                     <?php
                     // Show Probation Assessment tab for Admins and permission group 8
@@ -415,7 +417,30 @@ if (session()->has('is_supervisor') && session()->has('is_supervisor') != false)
                         </a>
                     </li>
                     @endif
-					@if((checkPermission('view_shifts') != false) || (checkPermission('view_weekly_offs') != false) || (checkPermission('view_incident_summary') != false) || (checkPermission('view_incident_report') != false))
+                    <?php
+                    // Show Feedback Forms tab only for Admin users
+                    $showFeedbackForms = false;
+                    try {
+                        $showFeedbackForms = ( session()->has('role') && session()->get('role') == config('constants.ROLE_ADMIN') );
+                    } catch (\Exception $e) {}
+                    ?>
+                    @if($showFeedbackForms)
+                    <li class="nav-items nav-items-class dropdown">
+                        <a class="nav-link main-drodown-toggle dropdown-toggle first-menu collapsed" title="Feedback Forms" href="#feedbackFormsMenu" data-toggle="collapse">
+                            <i class="fa fa-comments fa-fw"></i>
+                            <span class="nav-text">Feedback Forms</span>
+                        </a>
+                        <ul class="collapse navbar-collapse sub-dropdown-collapse" id="feedbackFormsMenu">
+                            <li class="dropdown sub-dropdown-menu dropdown-sub-megamenu nav-items">
+                                <a class="nav-link dropdown-item main-drodown-toggle collapsed" href="{{ url('feedback-forms') }}">1 Month Feedback</a>
+                            </li>
+                            <li class="dropdown sub-dropdown-menu dropdown-sub-megamenu nav-items">
+                                <a class="nav-link dropdown-item main-drodown-toggle collapsed" href="{{ url('feedback-forms-six') }}">6 Month Feedback</a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endif
+                    @if((checkPermission('view_shifts') != false) || (checkPermission('view_weekly_offs') != false) || (checkPermission('view_incident_summary') != false) || (checkPermission('view_incident_report') != false))
                     <li class="nav-items nav-items-class dropdown">
                         <a class="nav-link main-drodown-toggle dropdown-toggle first-menu collapsed <?php echo $desktopClass ?>" title="{{ trans('messages.company') }}" href="#manageMenu3" data-toggle="collapse"><i class="fa fa-building fa-fw" aria-hidden="true"></i><span class="nav-text">{{ trans('messages.company') }} </span></a>
                         <ul class="collapse navbar-collapse" id="manageMenu3">

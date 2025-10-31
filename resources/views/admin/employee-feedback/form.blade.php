@@ -15,6 +15,11 @@
     </div>
 
     <div class="container-fluid pt-3">
+        @if(!empty($viewOnly) && $viewOnly)
+            <div class="alert alert-success mb-3">
+                <i class="fa fa-check-circle"></i> Feedback already submitted. The form is in view-only mode.
+            </div>
+        @endif
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">One Month Employee Feedback - {{ $employee->v_employee_full_name }} ({{ $employee->v_employee_code }})</h5>
@@ -22,6 +27,7 @@
             <div class="card-body">
                 <form id="feedbackForm" method="POST" action="{{ route('employee-feedback.store', $employee->i_id) }}">
                     @csrf
+                    <fieldset {{ (!empty($viewOnly) && $viewOnly) ? 'disabled' : '' }}>
 
                     <!-- Employee Details Section -->
                     <div class="row mb-4">
@@ -48,12 +54,12 @@
                         <div class="col-md-6">
                             <label for="v_department" class="form-label">Department *</label>
                             <input type="text" class="form-control" id="v_department" name="v_department"
-                                   value="{{ $employee->teamInfo ? $employee->teamInfo->v_value : 'N/A' }}" readonly style="background-color: #f8f9fa;">
+                                   value="{{ $employee->team_name ?? 'N/A' }}" readonly style="background-color: #f8f9fa;">
                         </div>
                         <div class="col-md-6">
                             <label for="v_designation" class="form-label">Designation *</label>
                             <input type="text" class="form-control" id="v_designation" name="v_designation"
-                                   value="{{ $employee->designationInfo ? $employee->designationInfo->v_value : 'N/A' }}" readonly style="background-color: #f8f9fa;">
+                                   value="{{ $employee->designation_name ?? 'N/A' }}" readonly style="background-color: #f8f9fa;">
                         </div>
                     </div>
 
@@ -795,7 +801,9 @@
                         </div>
                     </div>
 
+                    </fieldset>
                     <!-- Submit Buttons -->
+                    @if(empty($viewOnly) || !$viewOnly)
                     <div class="row">
                         <div class="col-md-12 text-center">
                             <button type="submit" class="btn btn-primary btn-lg">
@@ -806,6 +814,15 @@
                             </a>
                         </div>
                     </div>
+                    @else
+                    <div class="row">
+                        <div class="col-md-12 text-center">
+                            <a href="{{ route('employee-master.profile', $employee->i_id) }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Profile
+                            </a>
+                        </div>
+                    </div>
+                    @endif
                 </form>
             </div>
         </div>

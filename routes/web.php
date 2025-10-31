@@ -116,24 +116,6 @@ Route::get('/design-notifications', 'App\Http\Controllers\HomeController@notific
 
 Route::get('/slip', 'App\Http\Controllers\HomeController@slip');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Route::get('/design-add-employee', 'App\Http\Controllers\HomeController@add_employee');
 
 //Route::get('/design-profile', 'App\Http\Controllers\HomeController@punch_report');
@@ -285,9 +267,14 @@ Route::post('employee-master/documentDelete','App\Http\Controllers\EmployeeMaste
 Route::post('document-folder-master/checkUniqueDocumentFolderName','App\Http\Controllers\DocumentFolderMasterController@checkUniqueDocumentFolderName');
 
 // Employee Feedback Form Routes
-Route::get('employee-feedback/{employeeId}', 'App\Http\Controllers\EmployeeFeedbackController@showForm')->name('employee-feedback.show')->middleware('checklogin');
-Route::post('employee-feedback/{employeeId}', 'App\Http\Controllers\EmployeeFeedbackController@store')->name('employee-feedback.store')->middleware('checklogin');
-
+Route::get('employee-feedback/{employeeId}', 'App\\Http\\Controllers\\EmployeeFeedbackController@showForm')->name('employee-feedback.show')->middleware('checklogin');
+Route::post('employee-feedback/{employeeId}', 'App\\Http\\Controllers\\EmployeeFeedbackController@store')->name('employee-feedback.store')->middleware('checklogin');
+Route::get('feedback-forms', 'App\\Http\\Controllers\\EmployeeFeedbackController@listFeedbackForms')->name('feedback-forms.list')->middleware('checklogin');
+Route::get('feedback-forms/export', 'App\\Http\\Controllers\\EmployeeFeedbackController@exportOneMonthExcel')->name('feedback-forms.export')->middleware('checklogin');
+Route::get('feedback-forms-six', 'App\\Http\\Controllers\\EmployeeFeedbackController@listFeedbackFormsSixMonth')->name('feedback-forms-six.list')->middleware('checklogin');
+Route::get('feedback-forms-six/export', 'App\\Http\\Controllers\\EmployeeFeedbackController@exportSixMonthExcel')->name('feedback-forms-six.export')->middleware('checklogin');
+Route::get('employee-feedback-six/{employeeId}', 'App\Http\Controllers\EmployeeFeedbackController@showSixMonthForm')->name('employee-feedback-six.show')->middleware('checklogin');
+Route::post('employee-feedback-six/{employeeId}', 'App\Http\Controllers\EmployeeFeedbackController@storeSixMonth')->name('employee-feedback-six.store')->middleware('checklogin');
 Route::get('shift-master','App\Http\Controllers\ShiftMasterController@index')->middleware('checkpermission:view_shifts');
 Route::get('shift-master/create','App\Http\Controllers\ShiftMasterController@create')->middleware('checkpermission:add_shifts');
 Route::post('shift-master/add', 'App\Http\Controllers\ShiftMasterController@add')->middleware('checkpermission:add_shifts,edit_shifts');
