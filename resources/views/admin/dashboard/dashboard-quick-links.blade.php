@@ -30,7 +30,7 @@
                     <a class="q-links" href="{{ url('docs/view/Escalation_Matrix.pdf') }}" title="Escalation Matrix" target="_blank">Escalation Matrix</a>
                     <a class="q-links" href="{{ url('https://adminhelpdesk.acornuniversalconsultancy.com/login') }}" title="Admin Ticketing Tool" target="_blank">Admin Ticketing Tool</a>
                     <a class="q-links" href="{{ url('docs/view/New_UAN_Generation_Process.pdf') }}" title="New UAN Generation Process" target="_blank">New UAN Generation Process</a>
-                    <a class="q-links" href="{{ url('https://acornsolution.sharepoint.com/:f:/s/AcornUniversal/PR/Em16Hewy-65OlYYbZTsl28cBptpyH311Rc2Yy_Kyd84C_Q?e=0jNg1r') }}" title="New UAN Generation Process" target="_blank">Acorn NewsLetter</a>    
+                    <a class="q-links" href="{{ route('newsletters.index') }}" title="Acorn NewsLetter">Acorn NewsLetters</a>    
                 </div>
             </div>
         </div>

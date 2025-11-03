@@ -704,6 +704,11 @@ Route::get('update-employee-shift' , 'App\Http\Controllers\CronController@update
 Route::get('update-employee-shift/{date}' , 'App\Http\Controllers\CronController@updateEmployeeShift');
 Route::get('update-employee-shift/{date}/{employee_id}' , 'App\Http\Controllers\CronController@updateEmployeeShift');
 
+// Newsletter Routes
+Route::get('newsletters', function () {
+    return view('admin.newsletters.index');
+})->name('newsletters.index');
+
 Route::get('missing-punch' , 'App\Http\Controllers\ReportController@missingPunch')->middleware('checkpermission:view_missing_punch_report');
 Route::post('filterMissingPunch' , 'App\Http\Controllers\ReportController@filterMissingPunch')->middleware('checkpermission:view_missing_punch_report');
 
