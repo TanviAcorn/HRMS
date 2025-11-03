@@ -177,13 +177,49 @@
                                 <a href="javascript:void(0);" class="nav-link" onclick="getEmployeeAttendanceList(this)" data-record-id="{{ (isset($empId) ? $empId : 0 )}}" data-fetch="{{ config('constants.SELECTION_NO') }}" id="pills-attendance-tab" data-toggle="pill" data-target="#pills-attendance" role="tab" aria-controls="pills-leave-attendance" aria-selected="false">{{ trans("messages.attendance") }}</a>
                             </li>
                             @if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) ) ) ) || (  (isset($employeeRecordInfo->i_login_id) && ( $employeeRecordInfo->i_login_id == session()->get('user_id') ) )  ) )
-                            <li class="nav-item dropdown" role="presentation">
-                                <a href="javascript:void(0);" class="nav-link dropdown-toggle" id="pills-feedback-dropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Feedback Forms</a>
-                                <div class="dropdown-menu" aria-labelledby="pills-feedback-dropdown">
-                                    <a class="dropdown-item" href="{{ route('employee-feedback.show', $employeeRecordInfo->i_id) }}">1 Month Feedback</a>
-                                    <a class="dropdown-item" href="{{ route('employee-feedback-six.show', $employeeRecordInfo->i_id) }}">6 Month Feedback</a>
-                                </div>
-                            </li>
+                                @php
+                                    $showOneMonthFeedback = false;
+                                    $showSixMonthFeedback = false;
+                                    
+                                    if ($employeeRecordInfo && $employeeRecordInfo->dt_joining_date) {
+                                        $joiningDate = \Carbon\Carbon::parse($employeeRecordInfo->dt_joining_date);
+                                        $currentDate = \Carbon\Carbon::now();
+                                        
+                                        // Check for 1 month feedback (28-32 days after joining)
+                                        $oneMonthStartDate = $joiningDate->copy()->addDays(28);
+                                        $oneMonthEndDate = $joiningDate->copy()->addDays(32);
+                                        if ($currentDate->between($oneMonthStartDate, $oneMonthEndDate)) {
+                                            $showOneMonthFeedback = true;
+                                        }
+                                        
+                                        // Check for 6 month feedback (175-185 days after joining)
+                                        $sixMonthStartDate = $joiningDate->copy()->addDays(175);
+                                        $sixMonthEndDate = $joiningDate->copy()->addDays(185);
+                                        if ($currentDate->between($sixMonthStartDate, $sixMonthEndDate)) {
+                                            $showSixMonthFeedback = true;
+                                        }
+                                        
+                                        // Always show for admin regardless of date
+                                        if (in_array(session()->get('role'), [config('constants.ROLE_ADMIN')])) {
+                                            $showOneMonthFeedback = true;
+                                            $showSixMonthFeedback = true;
+                                        }
+                                    }
+                                @endphp
+                                
+                                @if($showOneMonthFeedback || $showSixMonthFeedback)
+                                <li class="nav-item dropdown" role="presentation">
+                                    <a href="javascript:void(0);" class="nav-link dropdown-toggle" id="pills-feedback-dropdown" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Feedback Forms</a>
+                                    <div class="dropdown-menu" aria-labelledby="pills-feedback-dropdown">
+                                        @if($showOneMonthFeedback)
+                                            <a class="dropdown-item" href="{{ route('employee-feedback.show', $employeeRecordInfo->i_id) }}">1 Month Feedback</a>
+                                        @endif
+                                        @if($showSixMonthFeedback)
+                                            <a class="dropdown-item" href="{{ route('employee-feedback-six.show', $employeeRecordInfo->i_id) }}">6 Month Feedback</a>
+                                        @endif
+                                    </div>
+                                </li>
+                                @endif
                             @endif
                         </ul>
  
