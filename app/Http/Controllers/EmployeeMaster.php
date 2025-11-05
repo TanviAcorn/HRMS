@@ -36,6 +36,8 @@ use App\Models\LeaveBalanceModel;
 use App\Rules\UniquePersonalEmailId;
 use App\DocumentTypeModel;
 use App\Models\SuspendHistory;
+use App\Mail\DocumentUploaded;
+use Illuminate\Support\Facades\Mail;
 use function GuzzleHttp\json_encode;
 use App\Models\Report;
 use App\Models\ReviseSalaryMaster;
@@ -1192,12 +1194,75 @@ class EmployeeMaster extends MasterController{
      		}
      		
      		if($result != false){
-     
-     			$this->ajaxResponse(1, $successMessage );
-     		}else {
-     			 
-     			$this->ajaxResponse(101, $errorMessages);
-     		}
+                // Send email notification to employee
+                try {
+                    $employee = EmployeeModel::find($employeeId);
+                    $documentType = DocumentTypeModel::find($employeeDocumentId);
+                    
+                    \Log::info('Starting document upload email process', [
+                        'employee_id' => $employeeId,
+                        'document_type_id' => $employeeDocumentId,
+                        'employee_found' => $employee ? 'yes' : 'no',
+                        'document_type_found' => $documentType ? 'yes' : 'no',
+                        'employee_email' => $employee ? ($employee->v_outlook_email_id ?? 'not found') : 'employee not found'
+                    ]);
+                    
+                    if ($employee && $documentType && !empty($employee->v_outlook_email_id)) {
+                        // Get the admin user who uploaded the document
+                        $uploadedBy = session()->get('user_name') ?: 'HR/Admin';
+                        
+                        \Log::info('Preparing to send email', [
+                            'to' => $employee->v_outlook_email_id,
+                            'document_type' => $documentType->v_document_type,
+                            'uploaded_by' => $uploadedBy
+                        ]);
+                        
+                        try {
+                            Mail::to($employee->v_outlook_email_id)
+                                ->send(new DocumentUploaded(
+                                    $employee, 
+                                    $documentType->v_document_type,
+                                    'Uploaded by: ' . $uploadedBy
+                                ));
+                                
+                            \Log::info('Document upload notification sent successfully', [
+                                'employee_id' => $employeeId,
+                                'document_type' => $documentType->v_document_type,
+                                'email' => $employee->v_outlook_email_id,
+                                'time' => now()->toDateTimeString()
+                            ]);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to send email', [
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            throw $e; // Re-throw to be caught by the outer try-catch
+                        }
+                    } else {
+                        $missing = [];
+                        if (!$employee) $missing[] = 'employee';
+                        if (!$documentType) $missing[] = 'document type';
+                        if (empty($employee->v_outlook_email_id)) $missing[] = 'email address';
+                        
+                        \Log::warning('Skipped sending email due to missing data: ' . implode(', ', $missing), [
+                            'employee_found' => $employee ? 'yes' : 'no',
+                            'document_type_found' => $documentType ? 'yes' : 'no',
+                            'has_email' => ($employee && !empty($employee->v_outlook_email_id)) ? 'yes' : 'no'
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send document upload notification', [
+                        'employee_id' => $employeeId,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Don't fail the request if email sending fails
+                }
+                
+                $this->ajaxResponse(1, $successMessage);
+            } else {
+                $this->ajaxResponse(101, $errorMessages);
+            }
      	}
      }
      
