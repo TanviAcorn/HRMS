@@ -21,7 +21,11 @@
                         </div>
                         <div class="col-sm-6 profile-display-item">
                             <h5 class="details-title">{{ trans('sub-designation') }}</h5>
-                            <p class="details-text">{{ (!empty($employeeRecordInfo->subDesignationInfo->v_sub_designation_name) ? $employeeRecordInfo->subDesignationInfo->v_sub_designation_name :'') }}</p>
+                            <p class="details-text">{{ (!empty($employeeRecordInfo->subDesignationInfo->v_sub_designation_name) ? $employeeRecordInfo->subDesignationInfo->v_sub_designation_name :'') }}
+                                @if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) && ( in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')  ) ) ) ) ) )  
+                                <a title="{{ trans('messages.edit') }}" href="javascript:void(0);" onclick="editJobSubDesignation(this);" data-record-id="{{ $encodeEmployeeId }}"  class="btn btn-sm mb-1 btn-edit btn-edit-history btn-color-text"><i class="fas fa-pencil-alt"></i></a>
+                                @endif
+                            </p>
                         </div>
                         <div class="col-sm-6 profile-display-item">
                             <h5 class="details-title">{{ trans("messages.team") }}</h5>

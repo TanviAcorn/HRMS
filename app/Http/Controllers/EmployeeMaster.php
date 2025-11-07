@@ -868,7 +868,6 @@ class EmployeeMaster extends MasterController{
      	if($employeeId > 0 ){
      		$whereData['master_id'] = $employeeId;
      		$whereData['singleRecord'] = true;
-     		
      		$allPermissionId = config('permission_constants.ALL_EMPLOYEE_LIST');
      		if( session()->has('user_permission') && ( in_array($allPermissionId, session()->get('user_permission')  ) ) ){
      			$whereData['show_all'] = true;
@@ -903,7 +902,6 @@ class EmployeeMaster extends MasterController{
      			if( session()->has('user_permission') && ( in_array($allPermissionId, session()->get('user_permission')  ) ) ){
      				$whereData['show_all'] = true;
      			}
-     			
      			$employeeRelationRecordDetails = $this->crudModel->getRecordDetails($whereData);
      			
      			if(!empty($employeeRelationRecordDetails->employeeRelation)){
@@ -994,7 +992,6 @@ class EmployeeMaster extends MasterController{
 	public function addPrimaryDetails(Request $request){
      	
      	if(!empty($request->post())){
-     		
      		$formValidation =[];
      		if( session()->get('role') == config('constants.ROLE_ADMIN')){
      			$formValidation['employee_name'] = ['required'];
@@ -1021,7 +1018,7 @@ class EmployeeMaster extends MasterController{
      		
      		if($employeeId > 0 ){
      			$recordData = [];
-     			if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) && ( in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')  ) ) ) ) ) ){
+     			if(in_array(session()->get('role'), [ config('constants.ROLE_ADMIN') ]) || ( session()->has('user_permission') && in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')) && in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')) ) ){
 	     			$recordData['v_employee_name'] = (!empty($request->post('employee_name')) ? trim($request->post('employee_name')) : null);
 	     			$recordData['v_employee_full_name'] = (!empty($request->post('full_name')) ? trim($request->post('full_name')) : null);
 	     			$recordData['e_gender'] = (!empty($request->post('gender')) ? trim($request->post('gender')) : null);
@@ -1033,10 +1030,16 @@ class EmployeeMaster extends MasterController{
      			$recordData['e_marital_status'] = (!empty($request->post('marital_status')) ? trim($request->post('marital_status')) : null);
      				
      			$updateRecord = $this->crudModel->updateTableData( $this->tableName , $recordData,['i_id' => $employeeId ]);
-     			
      			$empInfo = EmployeeModel::where('i_id' , $employeeId )->first();
-     			
-     			if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) && ( in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')  ) ) ) ) ) ){
+     			$canEditPrimary = (
+                in_array(session()->get('role'), [ config('constants.ROLE_ADMIN') ])
+                || (
+                    session()->has('user_permission')
+                    && in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission'))
+                    && in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission'))
+                )
+            );
+            if ($canEditPrimary) {
      				if( (!empty($empInfo)) && ( isset($empInfo->i_login_id) ) && ( isset($recordData['v_employee_full_name']) && (!empty($recordData['v_employee_full_name'])) )  ){
      					$this->crudModel->updateTableData( config('constants.LOGIN_MASTER_TABLE') , [ 'v_name' => $recordData['v_employee_full_name']  ],['i_id' => $empInfo->i_login_id ] );
      				}
@@ -1315,7 +1318,15 @@ class EmployeeMaster extends MasterController{
      		$employeeId = (!empty($request->post('employee_record_id')) ? (int)Wild_tiger::decode($request->post('employee_record_id')) : 0 );
      		$outlookEmail = (!empty($request->post('outlook_email_id')) ? trim($request->post('outlook_email_id')) : null);
      		$formValidation =[];
-     		if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) && ( in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')  ) ) ) ) ) ){
+     		$canEditContact = (
+                in_array(session()->get('role'), [ config('constants.ROLE_ADMIN') ])
+                || (
+                    session()->has('user_permission')
+                    && in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission'))
+                    && in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission'))
+                )
+            );
+     		if ($canEditContact) {
      			$formValidation['personal_email_id'] = ['required'];
      			$formValidation['contact_number'] = ['required','max:15'];
      			if(!empty($outlookEmail)){
@@ -1341,7 +1352,7 @@ class EmployeeMaster extends MasterController{
      		 
      		if($employeeId > 0 ){
      			$recordData = [];
-     			if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) && ( in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')  ) ) ) ) ) ){
+     			if ($canEditContact) {
 	     			$recordData['v_outlook_email_id'] = (!empty($outlookEmail) ? $outlookEmail : null);
 	     			$recordData['v_personal_email_id'] = (!empty($request->post('personal_email_id')) ? trim($request->post('personal_email_id')) : null);
 	     			$recordData['v_contact_no'] = (!empty($request->post('contact_number')) ? trim($request->post('contact_number')) :null);
@@ -1361,17 +1372,14 @@ class EmployeeMaster extends MasterController{
      				$empWhere['show_all'] = true;
      			}
      			
-     			
      			$recordDetail = $this->crudModel->getRecordDetails( $empWhere );
-     			
-     			if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) && ( in_array(config('permission_constants.EDIT_EMPLOYEE_PERMISSION'), session()->get('user_permission')  ) ) ) ) ) ){
-	     			$loginData = [];
-	     			$loginData['v_email'] = (!empty($outlookEmail) ? $outlookEmail : null);
-	     			$loginData['v_mobile'] = (!empty($request->post('contact_number')) ? trim($request->post('contact_number')) :null);
-	     			//dd($loginData);
-	     			$this->crudModel->updateTableData( config('constants.LOGIN_MASTER_TABLE') , $loginData,['i_id' => (!empty($recordDetail->loginInfo->i_id) ? $recordDetail->loginInfo->i_id : '') ]);
-     			}
-     			
+     			if ($canEditContact) {
+                $loginData = [];
+                $loginData['v_email'] = (!empty($outlookEmail) ? $outlookEmail : null);
+                $loginData['v_mobile'] = (!empty($request->post('contact_number')) ? trim($request->post('contact_number')) :null);
+                //dd($loginData);
+                $this->crudModel->updateTableData( config('constants.LOGIN_MASTER_TABLE') , $loginData,['i_id' => (!empty($recordDetail->loginInfo->i_id) ? $recordDetail->loginInfo->i_id : '') ]);
+            }
      			$recordInfo = $data = [];
      			$recordInfo['employeeRecordInfo'] = $recordDetail;
      			$recordInfo['empId'] = Wild_tiger::encode($employeeId);
@@ -1523,9 +1531,8 @@ class EmployeeMaster extends MasterController{
      		$errorMessages = trans('messages.error-update',['module'=> trans('messages.identity-pf-account-information')]);
      	
      		$result = false;
-     		$html = null;
      		$employeeId = (!empty($request->post('employee_record_id')) ? (int)Wild_tiger::decode($request->post('employee_record_id')) : 0 );
-     		 
+     		
      		if($employeeId > 0 ){
      			$recordData = [];
      			$recordData['v_aadhar_no'] = (!empty($request->post('aadhaar_number')) ? trim($request->post('aadhaar_number')) : '');
@@ -1902,10 +1909,7 @@ public function addAddressDetails(Request $request){
 				$salaryComponentWhere['t_is_deleted'] = 0;
 				$salaryComponentWhere['t_is_active'] = 1;
 				$salaryComponentWhere['i_salary_group_id'] = $salaryGroupdId;
-				$salaryComponentDetails = SalaryGroupDetailsModel::with(['salaryComponentInfo'])->whereHas('salaryComponentInfo', function($q){
-					$q->where('t_is_active', 1);
-					$q->where('t_is_deleted', 0);
-				})->where($salaryComponentWhere)->get()->sortBy('salaryComponentInfo.i_sequence',SORT_REGULAR);
+				$salaryComponentDetails = SalaryGroupDetailsModel::where($salaryComponentWhere)->get();
 				//$salaryComponentDetails = SalaryGroupDetailsModel::where($salaryComponentWhere)->get();
 				$data['salaryComponentDetails'] = $salaryComponentDetails;
 				//echo "<pre>";print_r($salaryComponentDetails);die;
@@ -1977,6 +1981,33 @@ public function addAddressDetails(Request $request){
 			echo $html;die;
 		}
 	}
+	
+	public function getEmployeeSubDesignationInfo(Request $request){
+        if(!empty($request->input())){
+            $employeeId = (!empty($request->input('record_id')) ? (int)Wild_tiger::decode($request->input('record_id')) : 0 );
+
+            $getEmployeeWhere  = [];
+            $getEmployeeWhere['master_id'] = $employeeId;
+            $getEmployeeWhere['singleRecord'] = true;
+            $allPermissionId = config('permission_constants.ALL_EMPLOYEE_LIST');
+            if( session()->has('user_permission') && ( in_array($allPermissionId, session()->get('user_permission')  ) ) ){
+                $getEmployeeWhere['show_all'] = true;
+            }
+            $data['recordInfo'] =  $this->crudModel->getRecordDetails($getEmployeeWhere);
+
+            $data['subDesignationDetails'] = [];
+            if( isset($data['recordInfo']->i_designation_id) && !empty($data['recordInfo']->i_designation_id) ){
+                $subDesignationModel = new SubDesignationMasterModel();
+                $data['subDesignationDetails'] = $subDesignationModel->getRecordDetails([
+                    'designation_id' => $data['recordInfo']->i_designation_id,
+                    'active_status' => 1
+                ]);
+            }
+
+            $html = view ($this->folderName . 'employee-sub-designation-info')->with ( $data )->render();
+            echo $html;die;
+        }
+    }
 	
 	public function getEmployeeTeamInfo(Request $request){
 		if(!empty($request->input())){
@@ -2069,6 +2100,41 @@ public function addAddressDetails(Request $request){
 		}
 	}
 	
+	public function updateEmployeeSubDesignation(Request $request){
+		if(!empty($request->input())){
+			$employeeId = (!empty($request->input('employee_id')) ? (int)Wild_tiger::decode($request->input('employee_id')) : 0 );
+			$subDesignationId = (!empty($request->input('sub_designation')) ? (int)Wild_tiger::decode($request->input('sub_designation')) : 0 );
+			$effectiveDate = (!empty($request->input('effective_date')) ? dbDate($request->input('effective_date')) : null );
+
+			if($employeeId <= 0 || $subDesignationId <= 0 || empty($effectiveDate)){
+				return Response::json([ 'status_code' => 101, 'message' => trans('messages.system-error') ]);
+			}
+
+			DB::beginTransaction();
+			try{
+				$this->crudModel->updateTableData( config('constants.EMPLOYEE_MASTER_TABLE') , [ 'i_sub_designation_id' => $subDesignationId ] , [ 'i_id' => $employeeId ]  );
+
+				$empWhere = [];
+				$empWhere['master_id'] = $employeeId;
+				$empWhere['singleRecord'] = true;
+				$allPermissionId = config('permission_constants.ALL_EMPLOYEE_LIST');
+				if( session()->has('user_permission') && ( in_array($allPermissionId, session()->get('user_permission')  ) ) ){
+					$empWhere['show_all'] = true;
+				}
+				$recordDetail = $this->crudModel->getRecordDetails( $empWhere );
+				$recordInfo = [];
+				$recordInfo['employeeRecordInfo'] = $recordDetail;
+				$html = view (config('constants.AJAX_VIEW_FOLDER') . 'employee-master/job-list')->with ( $recordInfo )->render();
+
+				DB::commit();
+				return Response::json([ 'status_code' => 1, 'message' => trans('messages.success'), 'data' => [ 'html' => $html ] ]);
+			} catch(\Exception $e){
+				DB::rollback();
+				return Response::json([ 'status_code' => 101, 'message' => trans('messages.system-error') ]);
+			}
+		}
+	}
+
 	
 	
 	public function updateEmployeeDataInfo(Request $request){

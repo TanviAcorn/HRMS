@@ -1,4 +1,4 @@
-<!--<div class="on-leave">
+<div class="on-leave">
     <div class="card card-display border-0 mb-3 p-2 py-3">
         <div class="card-body pt-0">
             <div class="row">
@@ -37,4 +37,4 @@
             </div>
         </div>
     </div>
-</div>-->
+</div>

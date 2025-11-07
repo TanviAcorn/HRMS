@@ -9,9 +9,9 @@
     </div>
     <div class="container-fluid my-leaves pb-3">
         <div class="row">
-            <!--<div class="col-12 profile-detail-card">
+            <div class="col-12 profile-detail-card">
             	 @include(config('constants.AJAX_VIEW_FOLDER') .'my-leaves/my-leaves-main-list') 
-            </div>-->
+            </div>
         </div>
     </div>
 </main>

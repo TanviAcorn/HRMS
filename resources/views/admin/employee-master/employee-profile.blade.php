@@ -77,7 +77,7 @@
                             </div>
                         </div>
                     </div>
-                    <!--<div class="tab-pane fade show" id="pills-salary" role="tabpanel" aria-labelledby="pills-salary-tab">
+                    <div class="tab-pane fade show" id="pills-salary" role="tabpanel" aria-labelledby="pills-salary-tab">
                         <div class="row">
                             <div class="col-12 profile-detail-card employee-salary-info">
                                 
@@ -99,7 +99,7 @@
                                
                             </div>
                         </div>
-                    </div>-->
+                    </div>
                 </div>
             </div>
 
@@ -107,6 +107,7 @@
     </section>
     <input type="hidden" name="emp_last_salary_generate_date" value="{{ ( isset($allowedLastEffDate) ? $allowedLastEffDate : '' ) }}">
     @include(config('constants.ADMIN_FOLDER') .'employee-master/edit-employee-designation')
+    @include(config('constants.ADMIN_FOLDER') .'employee-master/edit-employee-sub-designation')
     @include(config('constants.ADMIN_FOLDER') .'employee-master/edit-employee-team')
     @include(config('constants.ADMIN_FOLDER') .'employee-master/edit-employee-shift')
     @include(config('constants.ADMIN_FOLDER') .'employee-master/edit-employee-weekly-off')

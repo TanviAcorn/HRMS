@@ -340,10 +340,12 @@ Route::get('employees-summary' ,'App\Http\Controllers\EmployeeSummaryController@
 Route::post('salary/employees-salary-info' ,'App\Http\Controllers\SalaryController@employeeSalaryInfo');
 Route::post('salary/filter-salary-generate' ,'App\Http\Controllers\SalaryController@filter');
 Route::post('employee-master/getEmployeeDesignationInfo','App\Http\Controllers\EmployeeMaster@getEmployeeDesignationInfo');
+Route::post('employee-master/getEmployeeSubDesignationInfo','App\Http\Controllers\EmployeeMaster@getEmployeeSubDesignationInfo');
 Route::post('employee-master/getEmployeeTeamInfo','App\Http\Controllers\EmployeeMaster@getEmployeeTeamInfo');
 Route::post('employee-master/getEmployeeShiftInfo','App\Http\Controllers\EmployeeMaster@getEmployeeShiftInfo');
 Route::post('employee-master/getEmployeeWeekOffInfo','App\Http\Controllers\EmployeeMaster@getEmployeeWeekOffInfo');
 Route::post('employee-master/updateEmployeeDataInfo','App\Http\Controllers\EmployeeMaster@updateEmployeeDataInfo');
+Route::post('employee-master/updateEmployeeSubDesignation','App\Http\Controllers\EmployeeMaster@updateEmployeeSubDesignation');
 
 Route::post('employee-master/getEmployeeDesignationHistory','App\Http\Controllers\EmployeeMaster@getEmployeeDesignationHistory');
 Route::post('employee-master/getDesignationHistoryInfo','App\Http\Controllers\EmployeeMaster@getDesignationHistoryInfo');

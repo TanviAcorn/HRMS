@@ -1,4 +1,4 @@
-<!--<div class="leave-balance">
+<div class="leave-balance">
     <div class="card card-display mb-3 border-0 p-2 py-lg-3 pt-md-3">
         <div class="card-body py-0">
             <div class="row">
@@ -50,4 +50,4 @@
 $(document).ready(function(){
 	$(".leave-process").trigger('change');
 })
-</script>-->
+</script>
