@@ -242,17 +242,31 @@ function sendMailSMTP($data)
 	$settingInfo = $dbObject->getSingleRecordById(config('constants.SETTING_TABLE') , [ '*' ]);
 	//echo "<pre>";print_r($settingInfo);
 	try {
-
+		
+		// Get email configuration from database settings or fallback to config/env
+		$emailHost = ( isset($settingInfo->v_send_email_host) && (!empty($settingInfo->v_send_email_host)) ) ?  $settingInfo->v_send_email_host :  config('constants.SEND_EMAIL_HOST');
+		$emailPort = ( isset($settingInfo->i_send_email_port) && (!empty($settingInfo->i_send_email_port)) ) ?  $settingInfo->i_send_email_port :  config('constants.SEND_EMAIL_PORT');
+		$emailUser = ( isset($settingInfo->v_send_email_user) && (!empty($settingInfo->v_send_email_user)) ) ?  $settingInfo->v_send_email_user :  config('constants.SEND_EMAIL_USER');
+		$emailPassword = ( isset($settingInfo->v_send_email_password) && (!empty($settingInfo->v_send_email_password)) ) ?  $settingInfo->v_send_email_password :  config('constants.SEND_EMAIL_PASS');
+		$emailEncryption = config('constants.SEND_EMAIL_ENCRYPTION');
+		
+		// Log email configuration for debugging
+		\Log::info('OTP Email Configuration:', [
+			'host' => $emailHost,
+			'port' => $emailPort,
+			'user' => $emailUser,
+			'encryption' => $emailEncryption,
+			'to' => $data['to'] ?? 'not set'
+		]);
 		
 		// Setup your gmail mailer
-		$transport = new Swift_SmtpTransport( ( ( isset($settingInfo->v_send_email_host) && (!empty($settingInfo->v_send_email_host)) ) ?  $settingInfo->v_send_email_host :  config('constants.SEND_EMAIL_HOST') )  , ( ( isset($settingInfo->i_send_email_port) && (!empty($settingInfo->i_send_email_port)) ) ?  $settingInfo->i_send_email_port :  config('constants.SEND_EMAIL_PORT') ) , config('constants.SEND_EMAIL_ENCRYPTION') );
-		$transport->setUsername( ( isset($settingInfo->v_send_email_user) && (!empty($settingInfo->v_send_email_user)) ) ?  $settingInfo->v_send_email_user :  config('constants.SEND_EMAIL_USER') );
-		$transport->setPassword( ( isset($settingInfo->v_send_email_password) && (!empty($settingInfo->v_send_email_password)) ) ?  $settingInfo->v_send_email_password :  config('constants.SEND_EMAIL_PASS') );
+		$transport = new Swift_SmtpTransport($emailHost, $emailPort, $emailEncryption);
+		$transport->setUsername($emailUser);
+		$transport->setPassword($emailPassword);
 		
 		// Any other mailer configuration stuff needed...
 		$gmail = new Swift_Mailer($transport);
-		//$data['from_email'] = config('constants.SEND_EMAIL_USER');
-		$data['from_email'] = ( ( isset($settingInfo->v_send_email_user) && (!empty($settingInfo->v_send_email_user)) ) ?  $settingInfo->v_send_email_user :  config('constants.SEND_EMAIL_USER')  ) ;
+		$data['from_email'] = $emailUser;
 		//$data['receiverEmail'] = ( ( isset($settingInfo->v_contact_receive_mail) && (!empty($settingInfo->v_contact_receive_mail)) ) ?  $settingInfo->v_contact_receive_mail :  config('constants.CONTACT_US_INQUIRY_RECEIVE_MAIL')  ) ;
 		//$data['ccEmail'] = ( ( isset($settingInfo->v_default_cc_mail) && (!empty($settingInfo->v_default_cc_mail)) ) ?  $settingInfo->v_default_cc_mail :  ''  ) ;
 		//$data['mailTitle'] = ( ( isset($settingInfo->v_site_name) && (!empty($settingInfo->v_site_name)) ) ?  $settingInfo->v_site_name :  config('constants.SITE_TITLE')  ) ;
@@ -298,9 +312,14 @@ function sendMailSMTP($data)
 			}
 		});
 		$mailResult = true;
+		\Log::info('OTP Email sent successfully to: ' . ($data['to'] ?? 'unknown'));
 	} catch (\Exception $e) {
 		$mailResult = false;
 		$result['msg'] = $e->getMessage();
+		\Log::error('OTP Email sending failed: ' . $e->getMessage(), [
+			'to' => $data['to'] ?? 'not set',
+			'exception' => $e->getTraceAsString()
+		]);
 	}
 	//var_dump($mailResult);
 	//var_dump($result);die;

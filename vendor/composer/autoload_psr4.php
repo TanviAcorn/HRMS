@@ -66,6 +66,7 @@ return array(
     'Mpdf\\' => array($vendorDir . '/mpdf/mpdf/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'Mockery\\' => array($vendorDir . '/mockery/mockery/library/Mockery'),
+    'Microsoft\\Graph\\' => array($vendorDir . '/microsoft/microsoft-graph/src'),
     'Matrix\\' => array($vendorDir . '/markbaker/matrix/classes/src'),
     'League\\OAuth2\\Client\\' => array($vendorDir . '/league/oauth2-client/src'),
     'League\\MimeTypeDetection\\' => array($vendorDir . '/league/mime-type-detection/src'),

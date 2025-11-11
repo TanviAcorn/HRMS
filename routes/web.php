@@ -357,6 +357,7 @@ Route::post('employee-master/getWeekOffHistoryInfo','App\Http\Controllers\Employ
 Route::post('employee-master/getEmployeeProbationInfo','App\Http\Controllers\EmployeeMaster@getEmployeeProbationInfo');
 Route::post('employee-master/updateProbation','App\Http\Controllers\EmployeeMaster@updateProbation');
 Route::post('employee-master/updateLoginStatus','App\Http\Controllers\EmployeeMaster@updateLoginStatus');
+Route::post('employee-master/updateEmployeeAssets','App\Http\Controllers\EmployeeMaster@updateEmployeeAssets');
 
 Route::post('employee-master/getInitiateExitInfo','App\Http\Controllers\EmployeeMaster@getInitiateExitInfo');
 Route::post('employee-master/addInitiateExitForm','App\Http\Controllers\EmployeeMaster@addInitiateExitForm');
@@ -706,6 +707,20 @@ Route::get('update-employee-shift' , 'App\Http\Controllers\CronController@update
 Route::get('update-employee-shift/{date}' , 'App\Http\Controllers\CronController@updateEmployeeShift');
 Route::get('update-employee-shift/{date}/{employee_id}' , 'App\Http\Controllers\CronController@updateEmployeeShift');
 
+// HR Letters
+Route::get('hr-letters', 'App\\Http\\Controllers\\HrLetterController@index')->name('hr-letters.index')->middleware('checklogin');
+Route::get('hr-letters/{employeeId}', 'App\\Http\\Controllers\\HrLetterController@employeeLetters')
+    ->where('employeeId', '[0-9]+')
+    ->name('hr-letters.employee')
+    ->middleware('checklogin');
+Route::post('hr-letters/render', 'App\\Http\\Controllers\\HrLetterController@renderTemplate')->name('hr-letters.render')->middleware('checklogin');
+Route::post('hr-letters/pdf', 'App\\Http\\Controllers\\HrLetterController@generatePdf')->name('hr-letters.pdf')->middleware('checklogin');
+Route::post('hr-letters/preview', 'App\\Http\\Controllers\\HrLetterController@previewLetter')->name('hr-letters.preview')->middleware('checklogin');
+Route::post('hr-letters/submit', 'App\\Http\\Controllers\\HrLetterController@submitForApproval')->name('hr-letters.submit')->middleware('checklogin');
+Route::get('hr-letters/inbox', 'App\\Http\\Controllers\\HrLetterController@inbox')->name('hr-letters.inbox')->middleware('checklogin');
+Route::post('hr-letters/{id}/approve', 'App\\Http\\Controllers\\HrLetterController@approve')->name('hr-letters.approve')->middleware('checklogin');
+Route::post('hr-letters/{id}/reject', 'App\\Http\\Controllers\\HrLetterController@reject')->name('hr-letters.reject')->middleware('checklogin');
+Route::get('hr-letters/{id}/html', 'App\\Http\\Controllers\\HrLetterController@getLetterHtml')->name('hr-letters.html')->middleware('checklogin');
 // Newsletter Routes
 Route::get('newsletters', function () {
     return view('admin.newsletters.index');

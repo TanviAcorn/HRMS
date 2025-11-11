@@ -100,6 +100,15 @@
                             </div>
                         </div>
                     </div>
+                    @if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) ) ) ) || (  (isset($employeeRecordInfo->i_login_id) && ( $employeeRecordInfo->i_login_id == session()->get('user_id') ) )  ) )
+                    <div class="tab-pane fade" id="pills-assets" role="tabpanel" aria-labelledby="pills-assets-tab">
+                        <div class="row">
+                            <div class="col-12 profile-detail-card">
+                                @include(config('constants.AJAX_VIEW_FOLDER') .'employee-master/assets-info')
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
 

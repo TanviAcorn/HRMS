@@ -54,6 +54,15 @@
                                                 <span class="line"></span>
                                             </a>
                                         </li>
+                                        <li class="step-content step5">
+                                            <a href="javascript:void(0)" class="step-one selected-step" style="cursor: default;" data-tab-name="step5">
+                                                <span class="indicator" data-default="01">05</span>
+                                                <span class="description">
+                                                    <span class="details">{{trans('messages.asset-details')}}</span>
+                                                </span>
+                                                <span class="line"></span>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </div>
                                 <a href="{{ config('constants.EMPLOYEE_MASTER_URL')}}" class="btn btn-outline-secondary ml-auto mr-3 add-employee-close" title="{{ trans('messages.cancel') }}"><span class="step-close-btn d-none d-sm-block">{{ trans('messages.cancel') }}</span> <i class="fas fa-times step-colse-icon d-block d-sm-none "></i></a>
@@ -78,6 +87,9 @@
                                                 </div>
                                                 <div class="tab-pane" role="tabpanel" id="step4" data-tab-name="step4">
                                                     @include( config('constants.ADMIN_FOLDER') . 'employee-master/salary-details')
+                                                </div>
+                                                <div class="tab-pane" role="tabpanel" id="step5" data-tab-name="step5">
+                                                    @include( config('constants.ADMIN_FOLDER') . 'employee-master/asset-details')
                                                 </div>
                                             </div>
                                             <input type="hidden" name="record_id" value="">
@@ -548,10 +560,16 @@
 					}
 				}
 				
-				 alertify.confirm("{{ trans('messages.add-employee') }}","{{ trans('messages.common-confirm-msg',['module'=> trans('messages.add-employee')]) }}",function() { 
-					 $("#add-employee-master-form").submit();
-				}, function () { });
+				nextTWTWTab(thisitem);
 			 }  
+	 }
+
+	 function assetFormValidationDetails(thisitem){
+		var formData = new FormData( $('#add-employee-master-form')[0] );
+		
+		alertify.confirm("{{ trans('messages.add-employee') }}","{{ trans('messages.common-confirm-msg',['module'=> trans('messages.add-employee')]) }}",function() { 
+			$("#add-employee-master-form").submit();
+		}, function () { });
 	 }
 
 	function employeeRecruitmentSourceInfo(thisitem){

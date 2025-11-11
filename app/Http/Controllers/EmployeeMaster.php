@@ -37,6 +37,7 @@ use App\Rules\UniquePersonalEmailId;
 use App\DocumentTypeModel;
 use App\Models\SuspendHistory;
 use App\Mail\DocumentUploaded;
+use App\Mail\NewEmployeeAssetsNotification;
 use Illuminate\Support\Facades\Mail;
 use function GuzzleHttp\json_encode;
 use App\Models\Report;
@@ -506,6 +507,10 @@ class EmployeeMaster extends MasterController{
      	$recordData['i_shift_id'] = (!empty($request->post('shift')) ? (int)Wild_tiger::decode($request->post('shift')) :0);
      	$recordData['i_weekoff_id'] = (!empty($request->post('new_weekly_off')) ? (int)Wild_tiger::decode($request->post('new_weekly_off')) :0);
      	
+     	// Handle assets data
+     	$assets = $request->post('assets');
+     	$recordData['v_assets'] = (!empty($assets) && is_array($assets)) ? json_encode($assets) : null;
+     	
      	$weekOffEffectiveDate = (!empty($request->post('week_off_effective_date')) ? dbDate($request->post('week_off_effective_date')) : null);
      	
      	$recordData['dt_week_off_effective_date'] =  $weekOffEffectiveDate;
@@ -776,6 +781,30 @@ class EmployeeMaster extends MasterController{
      	//var_dump($result);die;
      	if( $result != false ){
      		DB::commit();
+     		
+     		// Send email notification to IT and Admin team if assets are assigned
+     		if( !empty($insertRecord) && !empty($recordData['v_assets']) ){
+     			try {
+     				$employeeInfo = EmployeeModel::with(['designationInfo', 'teamInfo'])->where('i_id', $insertRecord)->first();
+     				$assets = json_decode($recordData['v_assets'], true);
+     				
+     				if( !empty($employeeInfo) && !empty($assets) && is_array($assets) ){
+     					// Send to IT team
+     					if( !empty(config('constants.IT_TEAM_EMAIL')) ){
+     						Mail::to(config('constants.IT_TEAM_EMAIL'))->send(new NewEmployeeAssetsNotification($employeeInfo, $assets));
+     					}
+     					
+     					// Send to Admin team
+     					if( !empty(config('constants.ADMIN_TEAM_EMAIL')) ){
+     						Mail::to(config('constants.ADMIN_TEAM_EMAIL'))->send(new NewEmployeeAssetsNotification($employeeInfo, $assets));
+     					}
+     				}
+     			} catch(\Exception $e) {
+     				// Log error but don't stop the process
+     				\Log::error('Failed to send asset notification email: ' . $e->getMessage());
+     			}
+     		}
+     		
      		Wild_tiger::setFlashMessage ('success', $successMessage  );
      		return redirect($this->redirectUrl);
      		
@@ -2898,6 +2927,47 @@ public function addAddressDetails(Request $request){
 			}
 			$this->ajaxResponse(101, trans('messages.system-error') );
 			
+		}
+	}
+	
+	public function updateEmployeeAssets(Request $request){
+		if(!empty($request->input())){
+			$employeeId = (!empty($request->input('employee_id')) ? (int)Wild_tiger::decode($request->input('employee_id')) : 0 );
+			$assets = $request->input('assets');
+			
+			if(!empty($employeeId)){
+				$successMessage = trans('messages.success-update' , [ 'module' => trans("messages.assets") ] );
+				$errorMessage = trans('messages.error-update' , [ 'module' => trans("messages.assets") ] );
+				
+				$updateData = [];
+				$updateData['v_assets'] = (!empty($assets) && is_array($assets)) ? json_encode($assets) : null;
+				
+				DB::beginTransaction();
+				try{
+					$result = $this->crudModel->updateTableData( config('constants.EMPLOYEE_MASTER_TABLE') , $updateData , [ 'i_id' => $employeeId ] );
+					
+					if( $result !== false ){
+						DB::commit();
+						
+						// Get updated employee info
+						$employeeRecordInfo = EmployeeModel::where('i_id' , $employeeId )->first();
+						$recordInfo['employeeRecordInfo'] = $employeeRecordInfo;
+						
+						// Generate the updated HTML
+						$html = view (config('constants.AJAX_VIEW_FOLDER') . 'employee-master/assets-info')->with ( $recordInfo )->render();
+						
+						$this->ajaxResponse(1, $successMessage , [ 'html' => $html ] );
+					}
+					
+					DB::rollback();
+					$this->ajaxResponse(101, $errorMessage );
+					
+				} catch(\Exception $e){
+					DB::rollback();
+					$this->ajaxResponse(101, $errorMessage );
+				}
+			}
+			$this->ajaxResponse(101, trans('messages.system-error') );
 		}
 	}
 	

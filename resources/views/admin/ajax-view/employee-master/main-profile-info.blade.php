@@ -221,6 +221,11 @@
                                 </li>
                                 @endif
                             @endif
+                            @if( ( ( in_array( session()->get('role') , [ config('constants.ROLE_ADMIN') ] ) ) || ( ( session()->has('user_permission') && ( in_array(config('permission_constants.ALL_EMPLOYEE_LIST'), session()->get('user_permission')  ) ) ) ) ) || (  (isset($employeeRecordInfo->i_login_id) && ( $employeeRecordInfo->i_login_id == session()->get('user_id') ) )  ) )
+                            <li class="nav-item" role="presentation">
+                                <a href="javascript:void(0);" class="nav-link" id="pills-assets-tab" data-toggle="pill" data-target="#pills-assets" role="tab" aria-controls="pills-assets" aria-selected="false">{{ trans("messages.assets") }}</a>
+                            </li>
+                            @endif
                         </ul>
  
                     </div>

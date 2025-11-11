@@ -10,7 +10,7 @@
                     <div class="btn-class"><button type="button" class="default-btn prev-step" data-tab-name="step3" title="{{ trans('messages.previous') }}">{{trans('messages.previous')}}</button></div>
                 </div>
                 <div class="btn-next">
-                    <div class="btn-class"><button type="button" onclick="salaryFormValidationDetails(this);" class="default-btn tab-next-btn" title="{{ trans('messages.submit') }}">{{trans('messages.submit')}} </button></div>
+                    <div class="btn-class"><button type="button" onclick="salaryFormValidationDetails(this);" class="default-btn tab-next-btn" data-tab-name="step5" title="{{ trans('messages.next') }}">{{trans('messages.next')}} </button></div>
                 </div>
             </div>
         </div>
