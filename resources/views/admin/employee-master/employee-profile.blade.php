@@ -195,6 +195,42 @@
  	@include(config('constants.ADMIN_FOLDER') .'employee-master/emp-upload-document')
     
     @include(config('constants.ADMIN_FOLDER') .'employee-master/emp-view-document')
+    
+    <!-- Organization Chart Modal -->
+    <div class="modal fade document-folder" id="org-chart-modal" tabindex="-1" aria-labelledby="orgChartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orgChartModalLabel">{{ trans("messages.organization-chart") }}</h5>
+                    <div class="ml-auto mr-3 d-flex align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="zoomInOrgChart()" title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="zoomOutOrgChart()" title="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="resetZoomOrgChart()" title="Reset Zoom">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-success" onclick="downloadOrgChartJPG()" title="Download as JPG">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="fas fa-times"></i></span>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;" id="org-chart-modal-body">
+                    <div class="employee-org-chart-modal-content" id="org-chart-content" style="transform-origin: top center; transition: transform 0.2s ease;">
+                        <div class="text-center py-5">
+                            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                            <p class="mt-2 text-muted">Loading organization chart...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
    
    
    <script>
@@ -734,7 +770,119 @@
         // }
 		
 		
+		var orgChartZoom = 1;
 		
+		function openOrgChartModal(thisitem){
+			var record_id = $.trim($(thisitem).attr("data-record-id"));
+			
+			// Reset zoom
+			orgChartZoom = 1;
+			
+			// Open modal
+			$('#org-chart-modal').modal('show');
+			
+			// Load org chart data
+			$.ajax({
+    	 		type: "POST",
+    	 		url: employee_module_url + 'getEmployeeOrgChart',
+    	 		data: {
+    	 			"_token": "{{ csrf_token() }}",
+    	 			'record_id':record_id,
+    	 		},
+    	 		beforeSend: function() {
+    	 			$(".employee-org-chart-modal-content").html('<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i><p class="mt-2 text-muted">Loading organization chart...</p></div>');
+    	 		},
+    	 		success: function(response) {
+    	 	 		if( response != "" && response != null ){
+    	 	 			$(".employee-org-chart-modal-content").html(response);
+        	 	 	}
+    	 	 	},
+    	 		error: function() {
+    	 			$(".employee-org-chart-modal-content").html('<div class="alert alert-danger">Failed to load organization chart.</div>');
+    	 		}
+    	 	});
+		}
+		
+		function zoomInOrgChart() {
+			orgChartZoom += 0.1;
+			if(orgChartZoom > 2) orgChartZoom = 2;
+			applyOrgChartZoom();
+		}
+		
+		function zoomOutOrgChart() {
+			orgChartZoom -= 0.1;
+			if(orgChartZoom < 0.5) orgChartZoom = 0.5;
+			applyOrgChartZoom();
+		}
+		
+		function resetZoomOrgChart() {
+			orgChartZoom = 1;
+			applyOrgChartZoom();
+		}
+		
+		function applyOrgChartZoom() {
+			$('#org-chart-content').css('transform', 'scale(' + orgChartZoom + ')');
+		}
+		
+		function downloadOrgChartJPG() {
+			showLoader();
+			
+			// Get the element
+			const element = document.getElementById('org-chart-content');
+			
+			// Reset zoom for capture
+			const originalTransform = element.style.transform;
+			element.style.transform = 'scale(1)';
+			
+			// Use html2canvas to capture the element
+			if (typeof html2canvas === 'undefined') {
+				// Load html2canvas library dynamically
+				var script = document.createElement('script');
+				script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+				script.onload = function() {
+					captureAndDownloadJPG(element, originalTransform);
+				};
+				document.head.appendChild(script);
+			} else {
+				captureAndDownloadJPG(element, originalTransform);
+			}
+		}
+		
+		function captureAndDownloadJPG(element, originalTransform) {
+			html2canvas(element, {
+				scale: 3,
+				useCORS: true,
+				allowTaint: true,
+				backgroundColor: '#ffffff',
+				logging: false,
+				width: element.scrollWidth,
+				height: element.scrollHeight
+			}).then(function(canvas) {
+				// Convert canvas to JPG
+				const imgData = canvas.toDataURL('image/jpeg', 0.95);
+				
+				// Create download link
+				const link = document.createElement('a');
+				link.download = 'organization-chart.jpg';
+				link.href = imgData;
+				link.click();
+				
+				// Restore original transform
+				element.style.transform = originalTransform;
+				
+				hideLoader();
+				alertifyMessage('success', 'Organization chart downloaded successfully!');
+			}).catch(function(error) {
+				// Restore original transform
+				element.style.transform = originalTransform;
+				
+				hideLoader();
+				alertifyMessage('error', 'Failed to generate image');
+				console.error('Error:', error);
+			});
+		}
+		
+
 	</script>
 </main>
 

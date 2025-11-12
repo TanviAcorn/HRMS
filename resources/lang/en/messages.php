@@ -1255,6 +1255,8 @@ return [
 'edit-assets'=>'Edit Assets',
 'update-assets'=>'Update Assets',
 'no-assets-assigned'=>'No assets assigned to this employee',
+'organization-chart'=>'Organization Chart',
+'org-chart'=>'Org Chart',
 'error-unique-employee-code'=> 'This Employee Code Already Exists. Please Use Another Employee Code.',
 'address-identity-details'=>'Address & Identity Details',
 'same-as-current-address'=>'Same As Current Address',

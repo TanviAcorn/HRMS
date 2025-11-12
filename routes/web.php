@@ -358,8 +358,13 @@ Route::post('employee-master/getEmployeeProbationInfo','App\Http\Controllers\Emp
 Route::post('employee-master/updateProbation','App\Http\Controllers\EmployeeMaster@updateProbation');
 Route::post('employee-master/updateLoginStatus','App\Http\Controllers\EmployeeMaster@updateLoginStatus');
 Route::post('employee-master/updateEmployeeAssets','App\Http\Controllers\EmployeeMaster@updateEmployeeAssets');
+Route::post('employee-master/getEmployeeOrgChart','App\Http\Controllers\EmployeeMaster@getEmployeeOrgChart');
 
 Route::post('employee-master/getInitiateExitInfo','App\Http\Controllers\EmployeeMaster@getInitiateExitInfo');
+
+// Organization Chart Routes
+Route::get('organization-chart','App\Http\Controllers\OrganizationChartController@index');
+Route::get('organization-chart/get-chart-data','App\Http\Controllers\OrganizationChartController@getChartData');
 Route::post('employee-master/addInitiateExitForm','App\Http\Controllers\EmployeeMaster@addInitiateExitForm');
 
 Route::post('employee-master/getResignInfo','App\Http\Controllers\EmployeeMaster@getResignInfo');

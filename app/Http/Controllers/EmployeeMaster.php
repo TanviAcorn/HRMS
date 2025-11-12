@@ -2930,6 +2930,68 @@ public function addAddressDetails(Request $request){
 		}
 	}
 	
+	public function getEmployeeOrgChart(Request $request){
+		$employeeId = (!empty($request->input('record_id')) ? (int)Wild_tiger::decode($request->input('record_id')) : 0 );
+		
+		if(!empty($employeeId)){
+			$employeeInfo = EmployeeModel::with(['leaderInfo', 'designationInfo', 'teamInfo', 'childInfo.designationInfo'])
+				->where('i_id', $employeeId)
+				->first();
+			
+			if(!empty($employeeInfo)){
+				$recordInfo['employeeRecordInfo'] = $employeeInfo;
+				$recordInfo['currentEmployeeId'] = $employeeId;
+				
+				// Get manager chain (upward)
+				$managerChain = [];
+				$currentManager = $employeeInfo->leaderInfo;
+				while(!empty($currentManager)){
+					$managerChain[] = [
+						'id' => $currentManager->i_id,
+						'name' => $currentManager->v_employee_full_name,
+						'title' => $currentManager->designationInfo->v_value ?? '',
+						'team' => $currentManager->teamInfo->v_value ?? '',
+						'profile_pic' => $currentManager->v_profile_pic,
+						'profile_url' => config('constants.EMPLOYEE_PROFILE_LINK') . Wild_tiger::encode($currentManager->i_id)
+					];
+					$currentManager = $currentManager->leaderInfo;
+				}
+				$recordInfo['managerChain'] = array_reverse($managerChain);
+				
+				// Get current employee data
+				$recordInfo['currentEmployee'] = [
+					'id' => $employeeInfo->i_id,
+					'name' => $employeeInfo->v_employee_full_name,
+					'title' => $employeeInfo->designationInfo->v_value ?? '',
+					'team' => $employeeInfo->teamInfo->v_value ?? '',
+					'profile_pic' => $employeeInfo->v_profile_pic,
+					'profile_url' => config('constants.EMPLOYEE_PROFILE_LINK') . Wild_tiger::encode($employeeInfo->i_id)
+				];
+				
+				// Get direct reports (downward)
+				$directReports = [];
+				if(!empty($employeeInfo->childInfo)){
+					foreach($employeeInfo->childInfo as $child){
+						if($child->t_is_deleted == 0 && $child->t_is_active == 1){
+							$directReports[] = [
+								'id' => $child->i_id,
+								'name' => $child->v_employee_full_name,
+								'title' => $child->designationInfo->v_value ?? '',
+								'team' => $child->teamInfo->v_value ?? '',
+								'profile_pic' => $child->v_profile_pic,
+								'profile_url' => config('constants.EMPLOYEE_PROFILE_LINK') . Wild_tiger::encode($child->i_id)
+							];
+						}
+					}
+				}
+				$recordInfo['directReports'] = $directReports;
+				
+				$html = view (config('constants.AJAX_VIEW_FOLDER') . 'employee-master/org-chart-info')->with ( $recordInfo )->render();
+				echo $html;die;
+			}
+		}
+	}
+	
 	public function updateEmployeeAssets(Request $request){
 		if(!empty($request->input())){
 			$employeeId = (!empty($request->input('employee_id')) ? (int)Wild_tiger::decode($request->input('employee_id')) : 0 );

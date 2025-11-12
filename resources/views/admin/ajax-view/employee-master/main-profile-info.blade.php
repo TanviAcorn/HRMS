@@ -225,6 +225,9 @@
                             <li class="nav-item" role="presentation">
                                 <a href="javascript:void(0);" class="nav-link" id="pills-assets-tab" data-toggle="pill" data-target="#pills-assets" role="tab" aria-controls="pills-assets" aria-selected="false">{{ trans("messages.assets") }}</a>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <a href="javascript:void(0);" class="nav-link" onclick="openOrgChartModal(this)" data-record-id="{{ (isset($empId) ? $empId : 0 )}}">{{ trans("messages.org-chart") }}</a>
+                            </li>
                             @endif
                         </ul>
  
