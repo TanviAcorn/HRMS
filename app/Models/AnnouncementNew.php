@@ -13,6 +13,7 @@ class AnnouncementNew extends Model
         'content',
         'media',
         'category',
+        'url',
     ];
 
     public $timestamps = true; // Set false if your table doesn't have created_at / updated_at

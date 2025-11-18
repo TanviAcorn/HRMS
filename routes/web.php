@@ -67,6 +67,7 @@ Route::get('/login', 'App\Http\Controllers\LoginController@showLoginForm');
 Route::post('login/checkLogin', 'App\Http\Controllers\LoginController@checkLogin');
 Route::get('logout', 'App\Http\Controllers\DashboardController@logout');
 Route::get('dashboard', 'App\Http\Controllers\DashboardController@index')->name('dashboard')->middleware('checklogin');
+Route::get('dashboard/analytics-data', 'App\Http\Controllers\DashboardController@getAnalyticsData')->middleware('checklogin');
 Route::get('change-password', 'App\Http\Controllers\DashboardController@changePassword')->name('change-password')->middleware('checklogin');
 Route::post('dashboard/updatePassword','App\Http\Controllers\DashboardController@updatePassword');
 Route::post('removeRecord','App\Http\Controllers\MasterController@removeRecord');

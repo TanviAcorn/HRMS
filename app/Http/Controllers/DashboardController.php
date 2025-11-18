@@ -1062,5 +1062,324 @@ class DashboardController extends MasterController
      	Wild_tiger::setFlashMessage ('danger', trans('messages.system-error')  );
      	return redirect()->back();
      }
+     
+     /**
+      * Get all analytics data in one call
+      * @param Request $request
+      * @return JsonResponse
+      */
+     public function getAnalyticsData(Request $request)
+     {
+         try {
+             // Check if user is admin
+             if (session()->get('role') != config('constants.ROLE_ADMIN')) {
+                 return response()->json(['error' => 'Unauthorized'], 403);
+             }
+             
+             $year = $request->input('year', date('Y'));
+             
+             // Validate year parameter
+             if ($year < 2020 || $year > date('Y')) {
+                 $year = date('Y');
+             }
+             
+             // Check cache first
+             $cacheKey = 'analytics_data_' . $year;
+             $cacheTimestampKey = 'analytics_data_timestamp_' . $year;
+             
+             $cachedData = session()->get($cacheKey);
+             $cacheTimestamp = session()->get($cacheTimestampKey);
+             
+             // Cache duration: 5 minutes (300 seconds)
+             $cacheDuration = 300;
+             
+             // Return cached data if valid
+             if ($cachedData && $cacheTimestamp && (time() - $cacheTimestamp) < $cacheDuration) {
+                 return response()->json($cachedData);
+             }
+             
+             // Fetch fresh data
+             $data = [
+                 'employeeByDesignation' => $this->getEmployeeByDesignation(),
+                 'employeeByDepartment' => $this->getEmployeeByDepartment(),
+                 'additionsAttritions' => $this->getAdditionsAttritions($year),
+                 'employeeByStatus' => $this->getEmployeeByStatus(),
+                 'ctcByDepartment' => $this->getCtcByDepartment(),
+                 'genderDistribution' => $this->getGenderDistribution(),
+                 'serviceDistribution' => $this->getYearsOfServiceDistribution(),
+                 'ageDistribution' => $this->getAgeDistribution(),
+             ];
+             
+             // Store in session cache with timestamp
+             session()->put($cacheKey, $data);
+             session()->put($cacheTimestampKey, time());
+             
+             return response()->json($data);
+         } catch (\Exception $e) {
+             Log::error('Analytics data error: ' . $e->getMessage());
+             return response()->json(['error' => 'Failed to load analytics data'], 500);
+         }
+     }
+     
+     /**
+      * Get employee count grouped by designation
+      * @return array
+      */
+     private function getEmployeeByDesignation()
+     {
+         try {
+             $query = "SELECT 
+                         COALESCE(lm.v_value, 'Unassigned') as designation,
+                         COUNT(em.i_id) as count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . " em
+                       LEFT JOIN " . config('constants.LOOKUP_MASTER_TABLE') . " lm 
+                         ON em.i_designation_id = lm.i_id 
+                         AND lm.v_module_name = '" . config('constants.DESIGNATION_LOOKUP') . "'
+                         AND lm.t_is_deleted = 0
+                       WHERE em.t_is_deleted = 0 
+                         AND em.e_employment_status != '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                       GROUP BY em.i_designation_id, lm.v_value
+                       ORDER BY count DESC";
+             
+             return DB::select($query);
+         } catch (\Exception $e) {
+             Log::error('getEmployeeByDesignation error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get employee count grouped by department (team)
+      * @return array
+      */
+     private function getEmployeeByDepartment()
+     {
+         try {
+             $query = "SELECT 
+                         COALESCE(lm.v_value, 'Unassigned') as department,
+                         COUNT(em.i_id) as count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . " em
+                       LEFT JOIN " . config('constants.LOOKUP_MASTER_TABLE') . " lm 
+                         ON em.i_team_id = lm.i_id 
+                         AND lm.v_module_name = '" . config('constants.TEAM_LOOKUP') . "'
+                         AND lm.t_is_deleted = 0
+                       WHERE em.t_is_deleted = 0 
+                         AND em.e_employment_status != '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                       GROUP BY em.i_team_id, lm.v_value
+                       ORDER BY count DESC";
+             
+             return DB::select($query);
+         } catch (\Exception $e) {
+             Log::error('getEmployeeByDepartment error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get additions and attritions by month for a year
+      * @param int $year
+      * @return array
+      */
+     private function getAdditionsAttritions($year)
+     {
+         try {
+             // Optimized: Use date range instead of YEAR() function to allow index usage
+             $yearStart = $year . '-01-01';
+             $yearEnd = ($year + 1) . '-01-01';
+             
+             // Additions query - optimized with date range for index usage
+             $additionsQuery = "SELECT 
+                                 MONTH(dt_joining_date) as month,
+                                 COUNT(*) as count
+                                FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
+                                WHERE dt_joining_date >= ?
+                                  AND dt_joining_date < ?
+                                  AND t_is_deleted = 0
+                                GROUP BY MONTH(dt_joining_date)";
+             
+             $additions = DB::select($additionsQuery, [$yearStart, $yearEnd]);
+             
+             // Attritions query - optimized with date range for index usage
+             $attritionsQuery = "SELECT 
+                                  MONTH(dt_relieving_date) as month,
+                                  COUNT(*) as count
+                                 FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
+                                 WHERE dt_relieving_date >= ?
+                                   AND dt_relieving_date < ?
+                                   AND e_employment_status = '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                                   AND t_is_deleted = 0
+                                 GROUP BY MONTH(dt_relieving_date)";
+             
+             $attritions = DB::select($attritionsQuery, [$yearStart, $yearEnd]);
+             
+             // Format data for all 12 months
+             $monthlyData = [];
+             for ($i = 1; $i <= 12; $i++) {
+                 $monthlyData[] = [
+                     'month' => date('M', mktime(0, 0, 0, $i, 1)),
+                     'additions' => 0,
+                     'attritions' => 0
+                 ];
+             }
+             
+             foreach ($additions as $addition) {
+                 $monthlyData[$addition->month - 1]['additions'] = $addition->count;
+             }
+             
+             foreach ($attritions as $attrition) {
+                 $monthlyData[$attrition->month - 1]['attritions'] = $attrition->count;
+             }
+             
+             return $monthlyData;
+         } catch (\Exception $e) {
+             Log::error('getAdditionsAttritions error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get employee count grouped by employment status
+      * @return array
+      */
+     private function getEmployeeByStatus()
+     {
+         try {
+             $query = "SELECT 
+                         e_employment_status as status,
+                         COUNT(*) as count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
+                       WHERE t_is_deleted = 0
+                       GROUP BY e_employment_status
+                       ORDER BY count DESC";
+             
+             return DB::select($query);
+         } catch (\Exception $e) {
+             Log::error('getEmployeeByStatus error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get total annual CTC grouped by department (team)
+      * @return array
+      */
+     private function getCtcByDepartment()
+     {
+         try {
+             $query = "SELECT 
+                         COALESCE(lm.v_value, 'Unassigned') as department,
+                         SUM(COALESCE(esi.d_net_pay_annually, 0)) as total_ctc,
+                         COUNT(DISTINCT em.i_id) as employee_count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . " em
+                       LEFT JOIN " . config('constants.LOOKUP_MASTER_TABLE') . " lm 
+                         ON em.i_team_id = lm.i_id 
+                         AND lm.v_module_name = '" . config('constants.TEAM_LOOKUP') . "'
+                         AND lm.t_is_deleted = 0
+                       LEFT JOIN " . config('constants.EMPLOYEE_SALARY_MASTER_TABLE') . " esi 
+                         ON em.i_id = esi.i_employee_id AND esi.t_is_deleted = 0
+                       WHERE em.t_is_deleted = 0 
+                         AND em.e_employment_status != '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                       GROUP BY em.i_team_id, lm.v_value
+                       HAVING total_ctc > 0
+                       ORDER BY total_ctc DESC";
+             
+             $results = DB::select($query);
+             
+             // Log for debugging
+             Log::info('CTC by Department query results: ' . count($results) . ' rows');
+             if (empty($results)) {
+                 Log::warning('No CTC data found. Check if employee_salary_master table has data.');
+             }
+             
+             return $results;
+         } catch (\Exception $e) {
+             Log::error('getCtcByDepartment error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get employee count grouped by gender
+      * @return array
+      */
+     private function getGenderDistribution()
+     {
+         try {
+             $query = "SELECT 
+                         COALESCE(e_gender, 'Not Specified') as gender,
+                         COUNT(*) as count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
+                       WHERE t_is_deleted = 0 
+                         AND e_employment_status != '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                       GROUP BY e_gender
+                       ORDER BY count DESC";
+             
+             return DB::select($query);
+         } catch (\Exception $e) {
+             Log::error('getGenderDistribution error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get employee count grouped by years of service ranges
+      * @return array
+      */
+     private function getYearsOfServiceDistribution()
+     {
+         try {
+             // Optimized: Added NULL check to filter invalid records early
+             $query = "SELECT 
+                         CASE
+                             WHEN TIMESTAMPDIFF(YEAR, dt_joining_date, CURDATE()) < 1 THEN '0-1 years'
+                             WHEN TIMESTAMPDIFF(YEAR, dt_joining_date, CURDATE()) < 3 THEN '1-3 years'
+                             WHEN TIMESTAMPDIFF(YEAR, dt_joining_date, CURDATE()) < 5 THEN '3-5 years'
+                             WHEN TIMESTAMPDIFF(YEAR, dt_joining_date, CURDATE()) < 10 THEN '5-10 years'
+                             ELSE '10+ years'
+                         END as service_range,
+                         COUNT(*) as count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
+                       WHERE t_is_deleted = 0 
+                         AND e_employment_status != '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                         AND dt_joining_date IS NOT NULL
+                       GROUP BY service_range
+                       ORDER BY FIELD(service_range, '0-1 years', '1-3 years', '3-5 years', '5-10 years', '10+ years')";
+             
+             return DB::select($query);
+         } catch (\Exception $e) {
+             Log::error('getYearsOfServiceDistribution error: ' . $e->getMessage());
+             return [];
+         }
+     }
+     
+     /**
+      * Get employee count grouped by age ranges
+      * @return array
+      */
+     private function getAgeDistribution()
+     {
+         try {
+             $query = "SELECT 
+                         CASE
+                             WHEN TIMESTAMPDIFF(YEAR, dt_birth_date, CURDATE()) < 26 THEN '18-25'
+                             WHEN TIMESTAMPDIFF(YEAR, dt_birth_date, CURDATE()) < 36 THEN '26-35'
+                             WHEN TIMESTAMPDIFF(YEAR, dt_birth_date, CURDATE()) < 46 THEN '36-45'
+                             WHEN TIMESTAMPDIFF(YEAR, dt_birth_date, CURDATE()) < 56 THEN '46-55'
+                             ELSE '56+'
+                         END as age_range,
+                         COUNT(*) as count
+                       FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
+                       WHERE t_is_deleted = 0 
+                         AND e_employment_status != '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
+                         AND dt_birth_date IS NOT NULL
+                       GROUP BY age_range
+                       ORDER BY FIELD(age_range, '18-25', '26-35', '36-45', '46-55', '56+')";
+             
+             return DB::select($query);
+         } catch (\Exception $e) {
+             Log::error('getAgeDistribution error: ' . $e->getMessage());
+             return [];
+         }
+     }
 }
 

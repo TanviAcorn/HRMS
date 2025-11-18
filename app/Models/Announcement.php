@@ -18,6 +18,7 @@ class Announcement extends Model
         'content',
         'media',
         'category',
+        'url',
     ];
 
     /**

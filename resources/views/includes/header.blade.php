@@ -62,6 +62,13 @@
     <script src="{{ asset ('js/select2.js') }}"></script>
     <script src="{{ asset ('js/bootstrap.bundle.min.js') }}"></script>
     <script type="text/javascript" src="{{ asset ('js/chart.js') }}"></script>
+    <!-- Fallback to CDN if local Chart.js fails -->
+    <script>
+        if (typeof Chart === 'undefined') {
+            console.warn('Local Chart.js not loaded, loading from CDN...');
+            document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"><\/script>');
+        }
+    </script>
     <script type="text/javascript" src="{{ asset ('js/fullcalendar.min.js') }}"></script>
 
     <!-- plugins -->

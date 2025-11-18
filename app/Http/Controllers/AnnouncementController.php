@@ -28,6 +28,7 @@ class AnnouncementController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'url' => 'nullable|url|max:500',
             // Restrict to images only stored in public/announcements
             'media' => 'nullable|image|mimes:jpeg,jpg,png|max:51200',
             'category' => 'required|in:Events,Canteen Menu,Monday Motivation,Emergency,Under Maintenance,Internal Job Posting,Others',
@@ -56,6 +57,7 @@ class AnnouncementController extends Controller
             'content' => $request->content,
             'media' => $mediaPath,
             'category' => $request->category,
+            'url' => $request->url,
         ]);
 
         // Attempt to send notification email to all active users

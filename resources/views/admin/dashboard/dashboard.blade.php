@@ -4,15 +4,302 @@
 
 @section('content')
 
+<style>
+/* Toggle button styling */
+.view-toggle-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-toggle {
+    padding: 8px 16px;
+    border: 2px solid #b91c1c !important; /* theme color for visibility */
+    background-color: #ffffff !important;
+    color: #b91c1c !important; /* theme text color */
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: inline-block; /* ensure anchors look like buttons */
+    text-decoration: none !important;
+}
+
+.btn-toggle:hover {
+    background-color: #f8f9fa;
+    border-color: #b91c1c;
+    color: #b91c1c !important;
+}
+
+.btn-toggle.active {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+    color: #ffffff !important;
+}
+
+/* Anchor state overrides to keep visibility */
+.btn-toggle:link,
+.btn-toggle:visited,
+.btn-toggle:active,
+.btn-toggle:focus {
+    color: #b91c1c !important;
+    text-decoration: none !important;
+}
+.btn-toggle.active:link,
+.btn-toggle.active:visited,
+.btn-toggle.active:active,
+.btn-toggle.active:focus {
+    color: #ffffff !important;
+}
+
+.btn-toggle i { margin-right: 4px; color: #b91c1c !important; }
+.btn-toggle.active i { color: #ffffff !important; }
+
+/* Shield against global .btn styles that might set white text */
+.view-toggle-wrapper .btn-toggle.btn { color: #b91c1c !important; background-color: #ffffff !important; border-color: #b91c1c !important; }
+.view-toggle-wrapper .btn-toggle.btn.active { color: #ffffff !important; background-color: #b91c1c !important; border-color: #b91c1c !important; }
+
+/* Dashboard view containers */
+.dashboard-view {
+    display: none;
+}
+
+.dashboard-view.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: auto !important;
+}
+
+/* Ensure modals always appear above dashboard views */
+.modal {
+    z-index: 9999 !important;
+}
+
+.modal-backdrop {
+    z-index: 9998 !important;
+}
+
+#welcomeView.active {
+    display: block !important;
+}
+
+#analyticsView {
+    min-height: 500px;
+    background: #f8f9fa !important;
+}
+
+#analyticsView.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: auto !important;
+}
+
+#analyticsView.active * {
+    visibility: visible !important;
+}
+
+#analyticsView.active .row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+}
+
+#analyticsView.active .col-lg-6,
+#analyticsView.active .col-lg-12 {
+    display: block !important;
+    flex: 0 0 auto !important;
+}
+
+#analyticsView.active .mb-4 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Ensure canvas elements are always visible when parent is active */
+#analyticsView.active canvas {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#analyticsView.active .card {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#analyticsView.active .card-body {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Mobile Responsiveness for Analytics Dashboard */
+@media (max-width: 768px) {
+    /* Toggle button adjustments for mobile */
+    .view-toggle-wrapper {
+        flex-direction: row;
+        gap: 6px;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn-toggle {
+        padding: 6px 12px;
+        font-size: 14px;
+        flex: 1;
+        max-width: 150px;
+    }
+    
+    .btn-toggle i {
+        margin-right: 2px;
+        font-size: 12px;
+    }
+    
+    /* Breadcrumb wrapper adjustments */
+    .breadcrumb-wrapper .container-fluid {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+    
+    .breadcrumb-wrapper h1 {
+        font-size: 20px;
+    }
+    
+    /* Chart card adjustments */
+    #analyticsView .card {
+        margin-bottom: 1rem;
+    }
+    
+    #analyticsView .card-header h5 {
+        font-size: 14px;
+    }
+    
+    #analyticsView .card-header i {
+        font-size: 14px;
+    }
+    
+    /* Chart canvas height adjustments for mobile */
+    #analyticsView canvas {
+        max-height: 250px !important;
+        height: 250px !important;
+    }
+    
+    /* Specific adjustments for horizontal bar charts */
+    #designationChart,
+    #ctcChart {
+        max-height: 300px !important;
+        height: 300px !important;
+    }
+    
+    /* Line chart adjustment */
+    #additionsAttritionsChart {
+        max-height: 220px !important;
+        height: 220px !important;
+    }
+    
+    /* Data tables - make them horizontally scrollable */
+    #analyticsView .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #analyticsView table {
+        font-size: 12px;
+        min-width: 100%;
+    }
+    
+    #analyticsView table th,
+    #analyticsView table td {
+        padding: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    /* Year filter adjustments */
+    #yearFilter {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+    
+    /* Reduce padding on mobile */
+    #analyticsView .card-body {
+        padding: 1rem;
+    }
+    
+    /* Chart loading spinner */
+    #analyticsView .chart-loading {
+        padding: 2rem 1rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small devices */
+    .btn-toggle {
+        padding: 5px 10px;
+        font-size: 13px;
+    }
+    
+    .breadcrumb-wrapper h1 {
+        font-size: 18px;
+    }
+    
+    #analyticsView .card-header h5 {
+        font-size: 13px;
+    }
+    
+    /* Further reduce chart heights on very small screens */
+    #analyticsView canvas {
+        max-height: 200px !important;
+        height: 200px !important;
+    }
+    
+    #designationChart,
+    #ctcChart {
+        max-height: 250px !important;
+        height: 250px !important;
+    }
+    
+    #additionsAttritionsChart {
+        max-height: 180px !important;
+        height: 180px !important;
+    }
+    
+    /* Table font size reduction */
+    #analyticsView table {
+        font-size: 11px;
+    }
+    
+    #analyticsView table th,
+    #analyticsView table td {
+        padding: 0.4rem;
+    }
+}
+</style>
+
 <main class="page-height bg-light-color">
     <div class="breadcrumb-wrapper d-flex">
-        <div class="container-fluid">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
             <h1 class="mb-0 header-title" id="pageTitle">{{ trans('messages.dashboard') }}</h1>
+            
+            @if(session('role') == config('constants.ROLE_ADMIN'))
+            <div class="view-toggle-wrapper">
+                <a class="btn btn-toggle {{ request('view','welcome') !== 'analytics' ? 'active' : '' }}" href="{{ route('dashboard', []) }}">
+                    <i class="fa fa-home"></i> Welcome
+                </a>
+                <a class="btn btn-toggle {{ request('view') === 'analytics' ? 'active' : '' }}" href="{{ route('dashboard', ['view' => 'analytics']) }}">
+                    <i class="fa fa-chart-bar"></i> Analytics
+                </a>
+            </div>
+            @endif
         </div>
     </div>
 
     <section class="inner-wrapper-common-sections main-listing-section pt-4">
         <div class="container-fluid">
+            @if(request('view','welcome') !== 'analytics')
+            <div id="welcomeView" class="dashboard-view active">
             <div class="row">
                 <!-- Left column -->
                 <div class="col-lg-4 pr-lg-0">
@@ -181,6 +468,15 @@
                     <div class="modal-body">
                         <p>{!! nl2br(e($announcement->content)) !!}</p>
 
+                        @if(!empty($announcement->url))
+                            <div class="mt-3 mb-3 p-3" style="background: #f0f9ff; border-left: 4px solid #0284c7; border-radius: 4px;">
+                                <strong>Link:</strong><br>
+                                <a href="{{ $announcement->url }}" target="_blank" style="color: #0284c7; word-break: break-all;">
+                                    <i class="fa fa-external-link-alt"></i> {{ $announcement->url }}
+                                </a>
+                            </div>
+                        @endif
+
                         @if(!empty($announcement->media))
                             @php
                                 $stored = $announcement->media;
@@ -256,6 +552,11 @@
                                             <textarea name="content" class="form-control" rows="4" required></textarea>
                                         </div>
                                         <div class="form-group">
+                                            <label for="url">URL Link (optional)</label>
+                                            <input type="url" name="url" class="form-control" placeholder="https://example.com">
+                                            <small class="form-text text-muted">Add a clickable link that will appear at the end of the announcement</small>
+                                        </div>
+                                        <div class="form-group">
                                             <label for="media">Media (optional)</label>
                                             <input type="file" name="media" class="form-control">
                                         </div>
@@ -272,12 +573,20 @@
                     <!-- End Add Modal -->
                 </div>
             </div>
+            </div><!-- End welcomeView -->
+            @elseif(session('role') == config('constants.ROLE_ADMIN'))
+                @include('admin.dashboard.dashboard-analytics')
+            @endif
         </div>
     </section>
 </main>
 
 @include(config('constants.AJAX_VIEW_FOLDER') .'my-leaves/leave-modal')
 @include(config('constants.ADMIN_FOLDER') .'time-off/apply-time-off')
+
+@if(session('role') == config('constants.ROLE_ADMIN') && request('view') === 'analytics')
+<script src="{{ asset('js/dashboard-analytics-simple.js') }}"></script>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
