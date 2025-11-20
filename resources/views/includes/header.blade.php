@@ -162,7 +162,15 @@ if (session()->has('is_supervisor') && session()->has('is_supervisor') != false)
                             <span class="nav-text">{{ trans("messages.dashboard") }}</span>
                         </a>
                     </li>
-					
+					@php $uid = (int)(session()->get('user_id')); $isAdmin = session()->has('role') && session()->get('role') == config('constants.ROLE_ADMIN'); @endphp
+                    @if( (session()->has('user_id') && in_array($uid, [751, 323])) || $isAdmin )
+                    <li class="nav-items-class">
+                        <a href="{{ (in_array($uid, [751,323])) ? url('hr-letters/inbox') : url('hr-letters') }}" class="nav-link first-menu" title="HR Letters">
+                            <i class="fa fa-file-contract fa-fw"></i>
+                            <span class="nav-text">HR Letters</span>
+                        </a>
+                    </li>
+                    @endif
                     <li class="nav-items-class">
                         @inject('crudModel', 'App\Models\Notification')
                         <?php
