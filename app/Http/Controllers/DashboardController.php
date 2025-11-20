@@ -1183,9 +1183,13 @@ class DashboardController extends MasterController
      private function getAdditionsAttritions($year)
      {
          try {
+             Log::info("getAdditionsAttritions called with year: $year");
+             
              // Optimized: Use date range instead of YEAR() function to allow index usage
              $yearStart = $year . '-01-01';
              $yearEnd = ($year + 1) . '-01-01';
+             
+             Log::info("Date range: $yearStart to $yearEnd");
              
              // Additions query - optimized with date range for index usage
              $additionsQuery = "SELECT 
@@ -1200,17 +1204,27 @@ class DashboardController extends MasterController
              $additions = DB::select($additionsQuery, [$yearStart, $yearEnd]);
              
              // Attritions query - optimized with date range for index usage
+             // Note: Using dt_release_date (not dt_relieving_date)
              $attritionsQuery = "SELECT 
-                                  MONTH(dt_relieving_date) as month,
+                                  MONTH(dt_release_date) as month,
                                   COUNT(*) as count
                                  FROM " . config('constants.EMPLOYEE_MASTER_TABLE') . "
-                                 WHERE dt_relieving_date >= ?
-                                   AND dt_relieving_date < ?
+                                 WHERE dt_release_date >= ?
+                                   AND dt_release_date < ?
                                    AND e_employment_status = '" . config('constants.RELIEVED_EMPLOYMENT_STATUS') . "'
                                    AND t_is_deleted = 0
-                                 GROUP BY MONTH(dt_relieving_date)";
+                                 GROUP BY MONTH(dt_release_date)";
              
              $attritions = DB::select($attritionsQuery, [$yearStart, $yearEnd]);
+             
+             // Log for debugging
+             Log::info("Additions/Attritions for year $year ($yearStart to $yearEnd): Additions=" . count($additions) . ", Attritions=" . count($attritions));
+             if (count($additions) > 0) {
+                 Log::info("Sample addition: " . json_encode($additions[0]));
+             }
+             if (count($attritions) > 0) {
+                 Log::info("Sample attrition: " . json_encode($attritions[0]));
+             }
              
              // Format data for all 12 months
              $monthlyData = [];

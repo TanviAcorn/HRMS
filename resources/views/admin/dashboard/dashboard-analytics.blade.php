@@ -70,26 +70,7 @@
         </div>
     </div>
 
-    <div class="row">
-        <!-- Additions and Attritions -->
-        <div class="col-lg-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fa fa-chart-line text-info"></i> Monthly Additions & Attritions
-                    </h5>
-                </div>
-                <div class="card-body" style="min-height: 400px; position: relative;">
-                    <div class="chart-loading text-center py-5">
-                        <div class="spinner-border text-info" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                    <canvas id="additionsAttritionsChart" width="1000" height="400"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <div class="row">
         <!-- Employee Count by Status -->
@@ -192,6 +173,25 @@
                     </div>
                     <canvas id="ageChart" width="600" height="400"></canvas>
                     <div id="ageTable" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Additions & Attritions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fa fa-chart-line text-info"></i> Monthly Additions & Attritions
+                    </h5>
+                </div>
+                <div class="card-body" style="height: 350px; position: relative; overflow: hidden;">
+                    <div class="chart-loading text-center py-5">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                    <canvas id="additionsAttritionsChart" width="600" height="300" style="max-height: 300px;"></canvas>
                 </div>
             </div>
         </div>

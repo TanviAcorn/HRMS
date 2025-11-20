@@ -437,11 +437,19 @@
                 ]
             },
             options: {
-                responsive: false,
                 maintainAspectRatio: false,
+                devicePixelRatio: window.devicePixelRatio || 2,
                 scales: {
                     yAxes: [{
-                        ticks: { beginAtZero: true }
+                        ticks: { 
+                            beginAtZero: true,
+                            precision: 0
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            autoSkip: false
+                        }
                     }]
                 }
             }
