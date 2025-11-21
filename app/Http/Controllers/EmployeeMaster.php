@@ -39,6 +39,7 @@ use App\Models\SuspendHistory;
 use App\Mail\DocumentUploaded;
 use App\Mail\NewEmployeeAssetsNotification;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_encode;
 use App\Models\Report;
 use App\Models\ReviseSalaryMaster;
@@ -560,6 +561,13 @@ class EmployeeMaster extends MasterController{
      			$insertLogin = $this->crudModel->insertTableData( config('constants.LOGIN_MASTER_TABLE'), $insertLoginData );
      				
      			$recordData['i_login_id'] = $insertLogin;
+     			
+     			// Send welcome email to new employee
+     			try {
+     				$this->sendWelcomeEmail($recordData, $generatePassword);
+     			} catch (\Exception $e) {
+     				Log::error('Failed to send welcome email: ' . $e->getMessage());
+     			}
      			$recordData['e_hold_salary_status'] = config('constants.SELECTION_NO');
      			if( $recordData['e_assign_salary'] == config('constants.SELECTION_YES') ){
      				$recordData['e_hold_salary_status'] =  (!empty($request->post('hold_salary')) ?  $request->post('hold_salary') : config('constants.SELECTION_NO') );
@@ -5161,4 +5169,69 @@ public function importLeaveBalance(Request $request){
 		Wild_tiger::setFlashMessage('danger', trans('messages.no-record-found-for-import'));
 		return redirect()->back();
 	}
+	
+    /**
+     * Send welcome email to new employee
+     */
+    private function sendWelcomeEmail($employeeData, $password)
+    {
+        try {
+            // Get employee details
+            $employeeId = $employeeData['i_id'] ?? null;
+            if (!$employeeId && isset($employeeData['v_employee_code'])) {
+                $employee = EmployeeModel::where('v_employee_code', $employeeData['v_employee_code'])->first();
+                $employeeId = $employee->i_id ?? null;
+            }
+            
+            // Get designation name
+            $designationName = 'N/A';
+            if (!empty($employeeData['i_designation_id'])) {
+                $designation = LookupMaster::find($employeeData['i_designation_id']);
+                $designationName = $designation->v_value ?? 'N/A';
+            }
+            
+            // Get department/team name
+            $departmentName = 'N/A';
+            if (!empty($employeeData['i_team_id'])) {
+                $team = LookupMaster::find($employeeData['i_team_id']);
+                $departmentName = $team->v_value ?? 'N/A';
+            }
+            
+            // Get manager name
+            $managerName = 'N/A';
+            if (!empty($employeeData['i_leader_id'])) {
+                $manager = EmployeeModel::find($employeeData['i_leader_id']);
+                $managerName = $manager->v_employee_full_name ?? 'N/A';
+            }
+            
+            // Prepare email data
+            $emailData = [
+                'employeeName' => $employeeData['v_employee_full_name'] ?? 'Employee',
+                'employeeCode' => $employeeData['v_employee_code'] ?? 'N/A',
+                'joiningDate' => date('d M Y', strtotime($employeeData['dt_joining_date'] ?? 'now')),
+                'designation' => $designationName,
+                'department' => $departmentName,
+                'managerName' => $managerName,
+                'location' => 'Acorn Heights, Anand', // Default location
+            ];
+            
+            // Send email
+            $mailConfig = [
+                'viewName' => 'emails.welcome_employee',
+                'mailData' => $emailData,
+                'subject' => 'Welcome to Acorn Universal Consultancy LLP - Your Journey Begins!',
+                'to' => $employeeData['v_outlook_email_id'] ?? '',
+            ];
+            
+            if (!empty($mailConfig['to'])) {
+                Wild_tiger::sendMailSMTP($mailConfig);
+                Log::info('Welcome email sent to: ' . $mailConfig['to']);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error in sendWelcomeEmail: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
 }
